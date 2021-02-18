@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mclr
 from tensorflow.keras import layers
 from tensorflow.keras import models
-
 # 5 вариант
 def genData(size=500):
     size1 = size//2
@@ -32,53 +31,53 @@ def drawResults(data, label, prediction):
     plt.scatter(data[:, 0], data[:, 1], s=10, c=p_label, cmap=mclr.ListedColormap(['red', 'blue']))
     plt.grid()
     plt.show()
-    # В данном месте необходимо создать модель и обучить ее
-    model = models.Sequential()
-    model.add(layers.Dense(64, activation='relu', input_shape=(2,)))
-    model.add(layers.Dense(64, activation='relu'))
-    model.add(layers.Dense(1, activation='sigmoid'))
+(train_data, train_label), (test_data, test_label) = genData(1000)
+# В данном месте необходимо создать модель и обучить ее
+model = models.Sequential()
+#добавление слоев
+model.add(layers.Dense(64, activation='relu', input_shape=(2,)))
+model.add(layers.Dense(64, activation='relu'))
+model.add(layers.Dense(1, activation='sigmoid'))
 
-    model.compile(optimizer='rmsprop', loss='binary_crossentropy', metrics='accuracy')
+model.compile(optimizer='rmsprop', loss='binary_crossentropy', metrics=['accuracy'])
 
-    data_val = train_data[:1000]
-    data_train = train_data[1000:]
-    label_val = train_label[:1000]
-    label_train = train_label[1000:]
+x_val = train_data[:len(train_data) * 2 // 10]
+partial_x_train = train_data[len(train_data) * 2 // 10:]
+y_val = train_label[:len(train_label) * 2 // 10]
+partial_y_train = train_label[len(train_label) * 2 // 10:]
+H = model.fit(partial_x_train, partial_y_train, epochs=20, batch_size=50, validation_data=(x_val, y_val))
 
-    H = model.fit(data_train, label_train, epochs=20, batch_size=512, validation_data=(data_val, label_val), verbose=False)
+# Получение ошибки и точности в процессе обучения
+loss = H.history['loss']
+val_loss = H.history['val_loss']
+acc = H.history['accuracy']
+val_acc = H.history['val_accuracy']
+epochs = range(1, len(loss) + 1)
 
-    # Получение ошибки и точности в процессе обучения
-    loss = H.history['loss']
-    val_loss = H.history['val_loss']
-    acc = H.history['accuracy']
-    val_acc = H.history['val_accuracy']
-    epochs = range(1, len(loss) + 1)
+# Построение графика ошибки
+plt.plot(epochs, loss, 'bo', label='Training loss')
+plt.plot(epochs, val_loss, 'b', label='Validation loss')
+plt.title('Training and validation loss')
+plt.xlabel('Epochs')
+plt.ylabel('Loss')
+plt.legend()
+plt.show()
 
-    # Построение графика ошибки
-    plt.plot(epochs, loss, 'bo', label='Training loss')
-    plt.plot(epochs, val_loss, 'b', label='Validation loss')
-    plt.title('Training and validation loss')
-    plt.xlabel('Epochs')
-    plt.ylabel('Loss')
-    plt.legend()
-    plt.show()
+# Построение графика точности
+plt.clf()
+plt.plot(epochs, acc, 'bo', label='Training acc')
+plt.plot(epochs, val_acc, 'b', label='Validation acc')
+plt.title('Training and validation accuracy')
+plt.xlabel('Epochs')
+plt.ylabel('Accuracy')
+plt.legend()
+plt.show()
 
-    # Построение графика точности
-    plt.clf()
-    plt.plot(epochs, acc, 'bo', label='Training acc')
-    plt.plot(epochs, val_acc, 'b', label='Validation acc')
-    plt.title('Training and validation accuracy')
-    plt.xlabel('Epochs')
-    plt.ylabel('Accuracy')
-    plt.legend()
-    plt.show()
+# Получение и вывод результатов на тестовом наборе
+results = model.evaluate(test_data, test_label)
+print(results)
 
-    # Получение и вывод результатов на тестовом наборе
-    results = model.evaluate(test_data, test_label)
-    print(results)
-
-    # Вывод результатов бинарной классификации
-    all_data = np.vstack((train_data, test_data))
-    all_label = np.vstack((train_label, test_label))
-    pred = model.predict(all_data)
-    drawResults(all_data, all_label, pred)
+all_data = np.vstack((train_data, test_data))
+all_label = np.vstack((train_label, test_label))
+pred = model.predict(all_data)
+drawResults(all_data, all_label, pred)
